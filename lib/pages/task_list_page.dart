@@ -1,21 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/models/task.dart';
+import 'package:todo_list/repositories/task_repository.dart';
 import '../widgets/task_item.dart';
 
-class TodoListPage extends StatefulWidget {
-  TodoListPage({Key? key}) : super(key: key);
+class TaskListPage extends StatefulWidget {
+  TaskListPage({Key? key}) : super(key: key);
 
   @override
-  State<TodoListPage> createState() => _TodoListPageState();
+  State<TaskListPage> createState() => _TodoListPageState();
 }
 
-class _TodoListPageState extends State<TodoListPage> {
-  final TextEditingController taskController =
-      TextEditingController(); //controle de edição da TextBox do nome da tarefa
+class _TodoListPageState extends State<TaskListPage> {
+  final TextEditingController taskController = TextEditingController(); //controle de edição da TextBox do nome da tarefa
+  final TaskRepository taskRepository = TaskRepository();
 
   List<Task> tasks = []; //lista para armazenar todas as tarefas
   Task? deletedTask; //armazena a última tarefa excluída
   int? deletedTaskPosition; //armazena a posição da última tarefa excluída
+
+  @override
+  void initState(){
+    super.initState();
+
+    taskRepository.getTaskList().then((value){
+      setState(() {
+        tasks = value;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +66,7 @@ class _TodoListPageState extends State<TodoListPage> {
                             tasks.add(newTask);
                           });
                           taskController.clear();
+                          taskRepository.saveTaskList(tasks);
                         },
                         style: ElevatedButton.styleFrom(
                           primary: Colors.teal,
@@ -118,6 +131,7 @@ class _TodoListPageState extends State<TodoListPage> {
     setState(() {
       tasks.remove(task); //remove a tarefa da lista
     });
+    taskRepository.saveTaskList(tasks);
 
     ScaffoldMessenger.of(context).clearSnackBars(); //limpa todas as SnackBars existentes
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -135,6 +149,7 @@ class _TodoListPageState extends State<TodoListPage> {
           setState(() {
             tasks.insert(deletedTaskPosition!, deletedTask!); //'!' serve para dar certeza que a variável não é nula
           });
+          taskRepository.saveTaskList(tasks);
         },
       ),
       duration: const Duration(seconds: 7),
@@ -176,5 +191,6 @@ class _TodoListPageState extends State<TodoListPage> {
     setState(() {
       tasks.clear(); //limpa todas as tarefas
     });
+    taskRepository.saveTaskList(tasks);
   }
 }
