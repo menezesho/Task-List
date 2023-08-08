@@ -11,18 +11,21 @@ class TaskListPage extends StatefulWidget {
 }
 
 class _TodoListPageState extends State<TaskListPage> {
-  final TextEditingController taskController = TextEditingController(); //controle de edição da TextBox do nome da tarefa
+  final TextEditingController taskController =
+      TextEditingController(); //controle de edição da TextBox do nome da tarefa
   final TaskRepository taskRepository = TaskRepository();
 
   List<Task> tasks = []; //lista para armazenar todas as tarefas
   Task? deletedTask; //armazena a última tarefa excluída
   int? deletedTaskPosition; //armazena a posição da última tarefa excluída
 
+  String? errorMessage;
+
   @override
-  void initState(){
+  void initState() {
     super.initState();
 
-    taskRepository.getTaskList().then((value){
+    taskRepository.getTaskList().then((value) {
       setState(() {
         tasks = value;
       });
@@ -51,6 +54,16 @@ class _TodoListPageState extends State<TaskListPage> {
                             border: OutlineInputBorder(),
                             labelText: 'Adicionar tarefa',
                             hintText: 'Estudar Flutter',
+                            labelStyle: TextStyle(
+                              color: Colors.teal,
+                            ),
+                            errorText: errorMessage,
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Colors.teal,
+                                width: 2,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -58,12 +71,22 @@ class _TodoListPageState extends State<TaskListPage> {
                       ElevatedButton(
                         onPressed: () {
                           String text = taskController.text;
+
+                          //verifica se o campo está vazio
+                          if (text.isEmpty) {
+                            setState(() {
+                              errorMessage = 'Campo obrigatório!';
+                            });
+                            return;
+                          }
+
                           setState(() {
                             Task newTask = Task(
                               title: text,
                               createDate: DateTime.now(),
                             );
                             tasks.add(newTask);
+                            errorMessage = null;
                           });
                           taskController.clear();
                           taskRepository.saveTaskList(tasks);
@@ -126,14 +149,16 @@ class _TodoListPageState extends State<TaskListPage> {
 
   void onDelete(Task task) {
     deletedTask = task; //armazena o nome da tarefa excluída
-    deletedTaskPosition = tasks.indexOf(task); //armazena a posição nas lista da tarefa que foi deletada
+    deletedTaskPosition = tasks.indexOf(
+        task); //armazena a posição nas lista da tarefa que foi deletada
 
     setState(() {
       tasks.remove(task); //remove a tarefa da lista
     });
     taskRepository.saveTaskList(tasks);
 
-    ScaffoldMessenger.of(context).clearSnackBars(); //limpa todas as SnackBars existentes
+    ScaffoldMessenger.of(context)
+        .clearSnackBars(); //limpa todas as SnackBars existentes
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
         'Tarefa ${task.title} removida com sucesso!',
@@ -147,7 +172,8 @@ class _TodoListPageState extends State<TaskListPage> {
         textColor: Colors.teal,
         onPressed: () {
           setState(() {
-            tasks.insert(deletedTaskPosition!, deletedTask!); //'!' serve para dar certeza que a variável não é nula
+            tasks.insert(deletedTaskPosition!,
+                deletedTask!); //'!' serve para dar certeza que a variável não é nula
           });
           taskRepository.saveTaskList(tasks);
         },
